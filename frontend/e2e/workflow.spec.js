@@ -1,0 +1,24 @@
+import {test,expect} from '@playwright/test';
+test('dashboard, filters, station creation, validation, CSV export',async({page})=>{
+ await page.goto('/');
+ await expect(page.getByRole('heading',{name:'Сеть в цифрах'})).toBeVisible();
+ await expect(page.getByText(/33.222/).first()).toBeVisible();
+ await page.screenshot({path:'../../preview.png',fullPage:true});
+ await page.getByRole('combobox').first().selectOption('Север');
+ await page.getByRole('button',{name:'Применить',exact:true}).click();
+ await expect(page.locator('.metrics article').last().locator('strong')).toHaveText('2');
+ await page.getByRole('button',{name:'Станции',exact:true}).click();
+ const code='TEST-'+Date.now();
+ await page.getByLabel('Код',{exact:true}).fill(code);
+ await page.getByLabel('Регион',{exact:true}).last().fill('Тест');
+ await page.getByRole('button',{name:'Сохранить станцию'}).click();
+ await expect(page.getByRole('cell',{name:code,exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Показатели',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Суточные показатели'})).toBeVisible();
+ const downloadPromise=page.waitForEvent('download');
+ await page.getByRole('link',{name:'Скачать CSV'}).click();
+ const download=await downloadPromise;expect(download.suggestedFilename()).toBe('telecom-report.csv');
+ await page.setViewportSize({width:390,height:844});
+ await expect(page.getByRole('heading',{name:'Показатели',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Сохранить показатели'})).toBeVisible();
+});

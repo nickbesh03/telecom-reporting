@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: telecom
+      MARIADB_USER: telecom
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Create .env from .env.example}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Create .env from .env.example}
+    volumes:
+      - network-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  app:
+    build: .
+    environment:
+      Database__Provider: MariaDb
+      ConnectionStrings__Network: Server=db;Database=telecom;User=telecom;Password=${DB_PASSWORD}
+      SeedDemo: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  network-data:
