@@ -1,0 +1,14 @@
+.env
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/wwwroot/
+*.db
+*.db-shm
+*.db-wal
+TestResults/
+playwright-report/
+test-results/
+.vs/
+*.user
