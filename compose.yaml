@@ -19,6 +19,7 @@ services:
       Database__Provider: MariaDb
       ConnectionStrings__Network: Server=db;Database=telecom;User=telecom;Password=${DB_PASSWORD}
       SeedDemo: "true"
+      SeedCoverageExtended: "true"
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

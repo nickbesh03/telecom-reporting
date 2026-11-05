@@ -39,6 +39,8 @@ jobs:
         working-directory: frontend
       - run: cp .env.example .env && docker compose up -d --build --wait
       - run: curl --fail --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8080/api/health
+      - name: Verify coverage fixture on MariaDB
+        run: python3 tests/check_coverage_fixture.py http://127.0.0.1:8080
       - if: always()
         run: docker compose logs --tail 80
       - if: always()

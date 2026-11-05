@@ -22,6 +22,10 @@ public class NetworkDb(DbContextOptions<NetworkDb> options) : DbContext(options)
     public DbSet<Station> Stations => Set<Station>();
     public DbSet<Observation> Observations => Set<Observation>();
     protected override void OnModelCreating(ModelBuilder m) {
+        m.Entity<MapCell>().ToTable("MapCells").HasKey(c => new { c.StationId, c.Sector });
+        m.Entity<MapCell>().HasOne(c => c.Station).WithMany().HasForeignKey(c => c.StationId);
+        m.Entity<CellHour>().ToTable("CellHours").HasKey(h => new { h.StationId, h.Sector, h.HourUtc });
+        m.Entity<CellHour>().HasOne<MapCell>().WithMany().HasForeignKey(h => new { h.StationId, h.Sector });
         m.Entity<Station>().Property(x=>x.Code).HasMaxLength(40);
         m.Entity<Station>().Property(x=>x.Region).HasMaxLength(80);
         m.Entity<Station>().Property(x=>x.Technology).HasMaxLength(8);

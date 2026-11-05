@@ -8,6 +8,26 @@ using Microsoft.Extensions.Configuration;
 using Telecom.Api;
 
 public class ApiTests {
+    [Fact]
+    public async Task Coverage_reports_weighted_rates_and_missing_hours()
+    {
+        using var factory = new Factory();
+        using var client = factory.CreateClient();
+        var cells = await client.GetFromJsonAsync<JsonElement>("/api/coverage/cells");
+        Assert.Equal(9, cells.GetArrayLength());
+        var stationId = cells[0].GetProperty("stationId").GetInt32();
+        var metrics = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/coverage/metrics?level=hour&stationId={stationId}&sector=1&from=2026-10-28T13:00:00Z&to=2026-10-28T14:00:00Z");
+        var point = metrics.GetProperty("items")[0];
+        Assert.Equal("complete", point.GetProperty("status").GetString());
+        Assert.Equal(54, point.GetProperty("dropped").GetInt32());
+        Assert.Equal(4.5, point.GetProperty("dropRate").GetDouble());
+
+        var missing = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/coverage/metrics?level=hour&stationId={stationId}&sector=1&from=2026-10-29T13:00:00Z&to=2026-10-29T14:00:00Z");
+        Assert.Equal("missing", missing.GetProperty("items")[0].GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, missing.GetProperty("items")[0].GetProperty("dropRate").ValueKind);
+    }
     sealed class Factory : WebApplicationFactory<Program> {
         readonly string path=Path.Combine(Path.GetTempPath(),Guid.NewGuid()+".db");
         protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.ConfigureAppConfiguration((_,c)=>c.AddInMemoryCollection(new Dictionary<string,string?>{{"Database:Provider",Environment.GetEnvironmentVariable("TEST_MARIADB")==null?"Sqlite":"MariaDb"},{"ConnectionStrings:Network",Environment.GetEnvironmentVariable("TEST_MARIADB")??$"Data Source={path};Pooling=False"},{"SeedDemo","true"}}));

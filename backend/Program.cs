@@ -17,10 +17,18 @@ app.UseStaticFiles();
 app.MapOpenApi();
 app.MapGet("/api/health", async (NetworkDb db) => await db.Database.CanConnectAsync() ? Results.Ok(new { status="ok" }) : Results.StatusCode(503));
 app.MapNetworkApi();
+app.MapCoverageApi();
 using (var scope = app.Services.CreateScope()) {
     var db=scope.ServiceProvider.GetRequiredService<NetworkDb>();
     await db.Database.EnsureCreatedAsync();
-    if (app.Configuration.GetValue("SeedDemo", true)) await Demo.Seed(db);
+    await CoverageApi.EnsureSchema(db);
+    if (app.Configuration.GetValue("SeedDemo", true))
+    {
+        await Demo.Seed(db);
+        await CoverageApi.Seed(db);
+        if (app.Configuration.GetValue("SeedCoverageExtended", false))
+            await CoverageFixture.Seed(db);
+    }
 }
 app.Run();
 public partial class Program { }
